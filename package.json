@@ -5,5 +5,22 @@
   "main": "index.js",
   "repository": "https://github.com/segayuu/hexo-renderer-webpack4",
   "author": "segayuu <segayuu@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "webpack": "^4.8.3"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-hexo": "^3.0.0",
+    "hexo": "^3.7.1"
+  },
+  "peerDependencies": {
+    "hexo": "^3.7.1"
+  },
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": "6 || 8 || >=10"
+  }
 }
