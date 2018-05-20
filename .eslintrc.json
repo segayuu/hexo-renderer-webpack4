@@ -1,3 +1,6 @@
 {
-    "extends": "hexo"
+    "extends": "hexo",
+    "parserOptions": {
+      "ecmaVersion": 2017
+    }
 }
