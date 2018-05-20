@@ -3,7 +3,6 @@ const webpack = require('webpack');
 const os = require('os');
 const MemoryFS = require('memory-fs');
 const pathFn = require('path');
-const { fromCallback } = require('universalify');
 
 const zipObject = require('lodash/zipObject');
 const mapValues = require('lodash/mapValues');
@@ -17,43 +16,43 @@ const cwd = process.cwd();
 
 const rootPrefix = x => pathFn.join(cwd, x);
 
-function getEntry(entry) {
+const getEntry = entry => {
   if (typeof entry === 'string') entry = [entry];
   if (Array.isArray(entry)) {
     entry = entry.map(rootPrefix);
     return zipObject(entry.map(x => pathFn.parse(x).name), entry);
   }
   return mapValues(entry, rootPrefix);
-}
+};
 
-async function renderer({path, text}, options) {
-  const { webpack: themeConfig = {} } = this.thene ? this.theme.config : {};
-  const { webpack: siteConfig = {} } = this.config;
+const getConfig = (path, ctx) => {
+  const { webpack: themeConfig = {} } = ctx.thene ? ctx.theme.config : {};
+  const { webpack: siteConfig = {} } = ctx.config;
 
-  const userConfig = Object.assign({}, themeConfig, siteConfig);
+  const config = Object.assign({}, themeConfig, siteConfig);
 
   //
   // Convert config of the entry to object.
   //
-  const entry = getEntry(userConfig.entry);
+  config.entry = getEntry(config.entry);
+
+  Object.assign(config.output, {
+    path: TMP_PATH,
+    filename: pathFn.basename(path)
+  });
+
+  return config;
+};
+
+async function renderer({path, text}, options) {
+  const config = getConfig(path, this);
 
   //
   // If this file is not a webpack entry simply return the file.
   //
-  if (!includes(entry, path)) {
+  if (!includes(config.entry, path)) {
     return text;
   }
-
-  //
-  // Copy config then Object.assign it with some defaults.
-  //
-  const config = Object.assign({}, userConfig, {
-    entry,
-    output: {
-      path: TMP_PATH,
-      filename: pathFn.basename(path)
-    }
-  });
 
   //
   // Setup compiler to use in-memory file system then run it.
@@ -61,11 +60,19 @@ async function renderer({path, text}, options) {
   const compiler = webpack(config);
   compiler.outputFileSystem = mfs;
 
-  const stats = await fromCallback(cb => compiler.run(cb))();
+  const stats = await new Promise((resolve, reject) => {
+    compiler.run((err, stats) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(stats);
+      }
+    });
+  });
 
   if (stats.hasErrors()) {
     this.log.error(stats.toString());
-    throw stats.toJson().errors[0];
+    throw stats.toJson('errors-only').errors[0];
   }
 
   const { output } = compiler.options;
