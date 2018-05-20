@@ -1,10 +1,10 @@
 {
-    "extends": ["hexo/test", "plugin:jest/recommended"],
-    "env": {
-        "mocha": false,
-        "jest": true
-    },
-    "parserOptions": {
-        "ecmaVersion": 2017
-    }
+  "extends": ["hexo/test", "plugin:jest/recommended"],
+  "env": {
+    "mocha": false,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2017
+  }
 }
