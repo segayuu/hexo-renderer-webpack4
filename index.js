@@ -79,4 +79,4 @@ const renderer = function({path, text}, options, callback) {
   });
 };
 
-hexo.extends.renderer.register('js', 'js', renderer);
+hexo.extend.renderer.register('js', 'js', renderer);
