@@ -20,7 +20,7 @@ test('hexo.render - state', () => {
 
 test('webpack mode: development', async() => {
   const fixtures_path = join(__dirname, '..', 'fixtures');
-  const expectedPromise = readFileAsync(join(fixtures_path, 'result_1.js'), 'utf8');
+  const expectedPromise = readFileAsync(join(fixtures_path, 'result_development.js'), 'utf8');
 
   hexo.config.webpack = {
     mode: 'development',
