@@ -34,3 +34,20 @@ test('webpack mode: development', async() => {
   const result = await hexo.render.render({ path: join(fixtures_path, 'spec_1.js'), engine: 'js' });
   expect(result).toBe(await expectedPromise);
 });
+
+test('webpack mode: production', async() => {
+  const fixtures_path = join(__dirname, '..', 'fixtures');
+  const expectedPromise = readFileAsync(join(fixtures_path, 'result_production.js'), 'utf8');
+
+  hexo.config.webpack = {
+    mode: 'production',
+    entry: 'fixtures/spec_1.js',
+    output: {
+      path: fixtures_path,
+      filename: 'dummy.js'
+    }
+  };
+
+  const result = await hexo.render.render({ path: join(fixtures_path, 'spec_1.js'), engine: 'js' });
+  expect(result).toBe(await expectedPromise);
+});
