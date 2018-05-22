@@ -36,6 +36,8 @@ const getConfig = (path, ctx) => {
   //
   config.entry = getEntry(config.entry);
 
+  config.output = config.output || {};
+
   Object.assign(config.output, {
     path: TMP_PATH,
     filename: pathFn.basename(path)

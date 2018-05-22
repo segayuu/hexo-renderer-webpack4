@@ -1,6 +1,5 @@
 'use strict';
 const Hexo = require('hexo');
-const renderer = require('../renderer');
 const { readFile } = require('fs');
 const { promisify } = require('util');
 const readFileAsync = promisify(readFile);
@@ -10,7 +9,7 @@ const hexo = new Hexo(process.cwd(), { silent: true });
 
 beforeAll(async() => {
   await hexo.init();
-  hexo.extend.renderer.register('js', 'js', renderer);
+  await hexo.loadPlugin(`${__dirname}/../index.js`);
 });
 
 test('hexo.render - state', () => {
@@ -24,11 +23,7 @@ test('webpack mode: development', async() => {
 
   hexo.config.webpack = {
     mode: 'development',
-    entry: 'fixtures/spec_1.js',
-    output: {
-      path: fixtures_path,
-      filename: 'dummy.js'
-    }
+    entry: 'fixtures/spec_1.js'
   };
 
   const result = await hexo.render.render({ path: join(fixtures_path, 'spec_1.js'), engine: 'js' });
@@ -41,11 +36,7 @@ test('webpack mode: production', async() => {
 
   hexo.config.webpack = {
     mode: 'production',
-    entry: 'fixtures/spec_1.js',
-    output: {
-      path: fixtures_path,
-      filename: 'dummy.js'
-    }
+    entry: 'fixtures/spec_1.js'
   };
 
   const result = await hexo.render.render({ path: join(fixtures_path, 'spec_1.js'), engine: 'js' });
