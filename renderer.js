@@ -4,9 +4,7 @@ const os = require('os');
 const MemoryFS = require('memory-fs');
 const pathFn = require('path');
 
-const zipObject = require('lodash/zipObject');
-const mapValues = require('lodash/mapValues');
-const includes = require('lodash/includes');
+const lodashMap = require('lodash/map');
 
 const TMP_PATH = os.tmpdir();
 
@@ -14,27 +12,11 @@ const mfs = new MemoryFS();
 
 const cwd = process.cwd();
 
-const rootPrefix = x => pathFn.join(cwd, x);
-
-const getEntry = entry => {
-  if (typeof entry === 'string') entry = [entry];
-  if (Array.isArray(entry)) {
-    entry = entry.map(rootPrefix);
-    return zipObject(entry.map(x => pathFn.parse(x).name), entry);
-  }
-  return mapValues(entry, rootPrefix);
-};
-
 const getConfig = (path, ctx) => {
   const { webpack: themeConfig = {} } = ctx.thene ? ctx.theme.config : {};
   const { webpack: siteConfig = {} } = ctx.config;
 
   const config = Object.assign({}, themeConfig, siteConfig);
-
-  //
-  // Convert config of the entry to object.
-  //
-  config.entry = getEntry(config.entry);
 
   config.output = config.output || {};
 
@@ -43,43 +25,61 @@ const getConfig = (path, ctx) => {
     filename: pathFn.basename(path)
   });
 
+  if (typeof config.entry === 'string') {
+    config.entry = pathFn.join(cwd, config.entry);
+  } else {
+    // Convert config of the entry from object.
+    config.entry = lodashMap(config.entry, x => pathFn.join(cwd, x));
+  }
+
   return config;
 };
 
-async function renderer({path, text}, options) {
+function renderer({path, text}, options) {
   const config = getConfig(path, this);
 
-  //
   // If this file is not a webpack entry simply return the file.
-  //
-  if (!includes(config.entry, path)) {
+  if (typeof config.entry === 'string') {
+    if (config.entry !== path) {
+      return text;
+    }
+  } else if (!config.entry.includes(path)) {
     return text;
   }
 
-  //
+  config.entry = path;
+
   // Setup compiler to use in-memory file system then run it.
-  //
   const compiler = webpack(config);
   compiler.outputFileSystem = mfs;
 
-  const stats = await new Promise((resolve, reject) => {
-    compiler.run((err, stats) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(stats);
-      }
-    });
-  });
-
-  if (stats.hasErrors()) {
-    this.log.error(stats.toString());
-    throw stats.toJson('errors-only').errors[0];
-  }
-
   const { output } = compiler.options;
   const outputPath = pathFn.join(output.path, output.filename);
-  return mfs.readFileSync(outputPath, 'utf8');
+
+  let resolve, reject;
+
+  const promise = new Promise((_resolve, _reject) => { resolve = _resolve; reject = _reject; });
+
+  compiler.run((err, stats) => {
+    if (err) {
+      reject(err);
+      return;
+    }
+
+    if (stats.hasErrors()) {
+      this.log.error(stats.toString());
+      reject(new Error(stats.toJson('errors-only').errors.join('\n')));
+      return;
+    }
+
+    if (stats.hasWarnings()) {
+      this.log.error(stats.toString());
+    }
+
+    resolve(mfs.readFileSync(outputPath, 'utf8'));
+  });
+
+  return promise;
 }
 
 module.exports = renderer;
