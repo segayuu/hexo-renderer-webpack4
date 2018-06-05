@@ -28,37 +28,42 @@ test('hexo.render - state', async () => {
 
 test('hexo.route - result', async () => {
   const fixtureName = 'development';
-  const ctx = await sandbox(fixtureName);
   const fixturePath = join(fixture_folder, fixtureName);
+  const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+
+  const ctx = await sandbox(fixtureName);
+
   const Post = ctx.model('Post');
   await Post.insert({source: 'foo', slug: 'foo'});
   await process(ctx);
+
   const content = await contentFor(ctx, 'spec_1.js');
-  const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
   expect(content.toString('utf8')).toBe(await expectedPromise);
 });
 
 test('webpack mode: development', async () => {
   const fixtureName = 'development';
-  const hexo = await sandbox(fixtureName);
   const fixturePath = join(fixture_folder, fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+
+  const hexo = await sandbox(fixtureName);
   const result = await hexo.render.render({ path: join(fixturePath, 'source', 'spec_1.js'), engine: 'js' });
+
   expect(result).toBe(await expectedPromise);
 });
 
 test('webpack mode: production', async () => {
   const fixtureName = 'production';
-  const hexo = await sandbox(fixtureName);
   const fixturePath = join(fixture_folder, fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+
+  const hexo = await sandbox(fixtureName);
   const result = await hexo.render.render({ path: join(fixturePath, 'source', 'spec_1.js'), engine: 'js' });
   expect(result).toBe(await expectedPromise);
 });
 
 test('webpack multi entry', async () => {
   const fixtureName = 'multi';
-  const hexo = await sandbox(fixtureName);
   const fixturePath = join(fixture_folder, fixtureName);
   const expectedPaths = [
     join(fixturePath, 'result_1.js'),
@@ -66,6 +71,7 @@ test('webpack multi entry', async () => {
   ];
   const expectedPromises = expectedPaths.map(path => readFileAsync(path, 'utf8'));
 
+  const hexo = await sandbox(fixtureName);
   const resultPaths = [
     join(fixturePath, 'source', 'spec_1.js'),
     join(fixturePath, 'source', 'spec_2.js')
