@@ -4,7 +4,8 @@ const { readFile } = require('fs');
 const { promisify } = require('util');
 const readFileAsync = promisify(readFile);
 const { join } = require('path');
-const { createSandbox } = require('hexo-test-utils/core');
+const { createSandbox, process } = require('hexo-test-utils/core');
+const { contentFor } = require('hexo-test-utils/routing');
 
 const fixture_folder = join(__dirname, 'fixtures');
 
@@ -20,15 +21,29 @@ const getSandBox = () => {
 const sandbox = getSandBox();
 
 test('hexo.render - state', async () => {
-  const hexo = await sandbox('js');
+  const hexo = await sandbox('development');
   expect(hexo.render.isRenderable('source/test.js')).toBe(true);
   expect(hexo.render.getOutput('source/test.js')).toBe('js');
 });
 
+test('hexo.route - result', async () => {
+  const fixtureName = 'development';
+  const ctx = await sandbox(fixtureName);
+  const fixturePath = join(fixture_folder, fixtureName);
+  const Post = ctx.model('Post');
+  await Post.insert({source: 'foo', slug: 'foo'});
+  await process(ctx);
+  const content = await contentFor(ctx, 'spec_1.js');
+  const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+  expect(content.toString('utf8')).toBe(await expectedPromise);
+});
+
 test('webpack mode: development', async () => {
-  const hexo = await sandbox('js');
-  const expectedPromise = readFileAsync(join(fixture_folder, 'js', 'result.js'), 'utf8');
-  const result = await hexo.render.render({ path: join(fixture_folder, 'js', 'source', 'spec_1.js'), engine: 'js' });
+  const fixtureName = 'development';
+  const hexo = await sandbox(fixtureName);
+  const fixturePath = join(fixture_folder, fixtureName);
+  const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+  const result = await hexo.render.render({ path: join(fixturePath, 'source', 'spec_1.js'), engine: 'js' });
   expect(result).toBe(await expectedPromise);
 });
 

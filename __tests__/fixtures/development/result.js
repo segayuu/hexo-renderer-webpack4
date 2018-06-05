@@ -66,32 +66,32 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./__tests__/fixtures/js/source/spec_1.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./__tests__/fixtures/development/source/spec_1.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./__tests__/fixtures/js/source/map.js":
-/*!*********************************************!*\
-  !*** ./__tests__/fixtures/js/source/map.js ***!
-  \*********************************************/
+/***/ "./__tests__/fixtures/development/source/map.js":
+/*!******************************************************!*\
+  !*** ./__tests__/fixtures/development/source/map.js ***!
+  \******************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\n\nconst hasSynbol = Boolean(Symbol);\n\nconst arrayMap = (array, callback) => {\n  const result = [];\n  let i = -1;\n  const len = array.length;\n  while (++i < len) {\n    result.push(callback(array[i], i));\n  }\n  return result;\n};\n\nconst iterMap = (iterable, callback) => {\n  const result = [];\n  let i = -1;\n  const iter = iterable[Symbol.iterator]();\n  let iterResult;\n  while ((iterResult = iter.next()).done !== false) {\n    result.push(callback(iterResult.value, ++i));\n  }\n  return result;\n};\n\nmodule.exports = (iterable, callback) => {\n  if (Array.isArray(iterable)) {\n    return arrayMap(iterable, callback);\n  } else if (hasSynbol && typeof iterable[Symbol.iterator] === 'function') {\n    return iterMap(iterable, callback);\n  }\n};\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/js/source/map.js?");
+eval("\n\nconst hasSynbol = Boolean(Symbol);\n\nconst arrayMap = (array, callback) => {\n  const result = [];\n  let i = -1;\n  const len = array.length;\n  while (++i < len) {\n    result.push(callback(array[i], i));\n  }\n  return result;\n};\n\nconst iterMap = (iterable, callback) => {\n  const result = [];\n  let i = -1;\n  const iter = iterable[Symbol.iterator]();\n  let iterResult;\n  while ((iterResult = iter.next()).done !== false) {\n    result.push(callback(iterResult.value, ++i));\n  }\n  return result;\n};\n\nmodule.exports = (iterable, callback) => {\n  if (Array.isArray(iterable)) {\n    return arrayMap(iterable, callback);\n  } else if (hasSynbol && typeof iterable[Symbol.iterator] === 'function') {\n    return iterMap(iterable, callback);\n  }\n};\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/development/source/map.js?");
 
 /***/ }),
 
-/***/ "./__tests__/fixtures/js/source/spec_1.js":
-/*!************************************************!*\
-  !*** ./__tests__/fixtures/js/source/spec_1.js ***!
-  \************************************************/
+/***/ "./__tests__/fixtures/development/source/spec_1.js":
+/*!*********************************************************!*\
+  !*** ./__tests__/fixtures/development/source/spec_1.js ***!
+  \*********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\nconst map = __webpack_require__(/*! ./map */ \"./__tests__/fixtures/js/source/map.js\");\n\nmodule.exports = map;\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/js/source/spec_1.js?");
+eval("\nconst map = __webpack_require__(/*! ./map */ \"./__tests__/fixtures/development/source/map.js\");\n\nmodule.exports = map;\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/development/source/spec_1.js?");
 
 /***/ })
 
