@@ -30,6 +30,6 @@
     "node": ">=10"
   },
   "jest": {
-    "testRegex": "/__tests__/[^/\\]+\\.js$"
+    "testRegex": "/__tests__/[^/\\\\]+\\.js$"
   }
 }
