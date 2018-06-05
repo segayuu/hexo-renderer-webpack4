@@ -1,4 +1,4 @@
 theme: test
 webpack:
-  mode: development
+  mode: production
   entry: spec_1.js

@@ -6,5 +6,10 @@
   },
   "parserOptions": {
     "ecmaVersion": 2017
+  },
+  "rules": {
+    "space-before-function-paren": [2, {
+      "asyncArrow": "always"
+    }]
   }
 }
