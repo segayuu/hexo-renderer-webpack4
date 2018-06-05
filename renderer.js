@@ -10,8 +10,6 @@ const TMP_PATH = os.tmpdir();
 
 const mfs = new MemoryFS();
 
-const cwd = process.cwd();
-
 const getConfig = (path, ctx) => {
   const { webpack: themeConfig = {} } = ctx.thene ? ctx.theme.config : {};
   const { webpack: siteConfig = {} } = ctx.config;
@@ -26,10 +24,10 @@ const getConfig = (path, ctx) => {
   });
 
   if (typeof config.entry === 'string') {
-    config.entry = pathFn.join(cwd, config.entry);
+    config.entry = pathFn.join(ctx.source_dir, config.entry);
   } else {
     // Convert config of the entry from object.
-    config.entry = lodashMap(config.entry, x => pathFn.join(cwd, x));
+    config.entry = lodashMap(config.entry, x => pathFn.join(ctx.source_dir, x));
   }
 
   return config;

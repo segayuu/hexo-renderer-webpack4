@@ -3,7 +3,7 @@
 const hasSynbol = Boolean(Symbol);
 
 const arrayReduce = (array, iteratee, accumulator, initAccum) => {
-  let i = -1
+  let i = -1;
   const length = array ? array.length : 0;
 
   if (initAccum && length) {
@@ -13,7 +13,7 @@ const arrayReduce = (array, iteratee, accumulator, initAccum) => {
     accumulator = iteratee(accumulator, array[i], i, array);
   }
   return accumulator;
-}
+};
 
 const iterableReduce = (iterable, iteratee, accumulator, initAccum) => {
   let i = -1;

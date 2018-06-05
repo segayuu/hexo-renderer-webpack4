@@ -1,0 +1,4 @@
+theme: test
+webpack:
+  mode: development
+  entry: spec_1.js
