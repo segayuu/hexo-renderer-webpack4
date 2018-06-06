@@ -3,6 +3,7 @@ const webpack = require('webpack');
 const os = require('os');
 const MemoryFS = require('memory-fs');
 const pathFn = require('path');
+const { tiferr } = require('iferr');
 
 const lodashMap = require('lodash/map');
 
@@ -58,16 +59,10 @@ function renderer({path, text}, options) {
 
   const promise = new Promise((_resolve, _reject) => { resolve = _resolve; reject = _reject; });
 
-  compiler.run((err, stats) => {
-    if (err) {
-      reject(err);
-      return;
-    }
-
+  compiler.run(tiferr(reject, stats => {
     if (stats.hasErrors()) {
       this.log.error(stats.toString());
-      reject(new Error(stats.toJson('errors-only').errors.join('\n')));
-      return;
+      throw new Error(stats.toJson('errors-only').errors.join('\n'));
     }
 
     if (stats.hasWarnings()) {
@@ -75,7 +70,7 @@ function renderer({path, text}, options) {
     }
 
     resolve(mfs.readFileSync(outputPath, 'utf8'));
-  });
+  }));
 
   return promise;
 }
