@@ -66,32 +66,32 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./fixtures/spec_1.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./__tests__/fixtures/multi/source/spec_2.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./fixtures/map.js":
-/*!*************************!*\
-  !*** ./fixtures/map.js ***!
-  \*************************/
+/***/ "./__tests__/fixtures/multi/source/reduce.js":
+/*!***************************************************!*\
+  !*** ./__tests__/fixtures/multi/source/reduce.js ***!
+  \***************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\n\nconst hasSynbol = Boolean(Symbol);\n\nconst arrayMap = (array, callback) => {\n  const result = [];\n  let i = -1;\n  const len = array.length;\n  while (++i < len) {\n    result.push(callback(array[i], i));\n  }\n  return result;\n};\n\nconst iterMap = (iterable, callback) => {\n  const result = [];\n  let i = -1;\n  const iter = iterable[Symbol.iterator]();\n  let iterResult;\n  while ((iterResult = iter.next()).done !== false) {\n    result.push(callback(iterResult.value, ++i));\n  }\n  return result;\n};\n\nmodule.exports = (iterable, callback) => {\n  if (Array.isArray(iterable)) {\n    return arrayMap(iterable, callback);\n  } else if (hasSynbol && typeof iterable[Symbol.iterator] === 'function') {\n    return iterMap(iterable, callback);\n  }\n};\n\n\n//# sourceURL=webpack:///./fixtures/map.js?");
+eval("\n\nconst hasSynbol = Boolean(Symbol);\n\nconst arrayReduce = (array, iteratee, accumulator, initAccum) => {\n  let i = -1;\n  const length = array ? array.length : 0;\n\n  if (initAccum && length) {\n    accumulator = array[++i];\n  }\n  while (++i < length) {\n    accumulator = iteratee(accumulator, array[i], i, array);\n  }\n  return accumulator;\n};\n\nconst iterableReduce = (iterable, iteratee, accumulator, initAccum) => {\n  let i = -1;\n\n  for (const item of iterable) {\n    if (initAccum) {\n      accumulator = item;\n      initAccum = false;\n      continue;\n    }\n    accumulator = iteratee(accumulator, item, ++i, iterable);\n  }\n  return accumulator;\n};\n\nmodule.exports = (iterable, iteratee, accumulator) => {\n  const initAccum = arguments.length < 3;\n  if (Array.isArray(iterable)) {\n    return arrayReduce(iterable, iteratee, accumulator, initAccum);\n  } else if (hasSynbol && typeof iterable[Symbol.iterator] === 'function') {\n    return iterableReduce(iterable, iteratee, accumulator, initAccum);\n  }\n};\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/multi/source/reduce.js?");
 
 /***/ }),
 
-/***/ "./fixtures/spec_1.js":
-/*!****************************!*\
-  !*** ./fixtures/spec_1.js ***!
-  \****************************/
+/***/ "./__tests__/fixtures/multi/source/spec_2.js":
+/*!***************************************************!*\
+  !*** ./__tests__/fixtures/multi/source/spec_2.js ***!
+  \***************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\nconst map = __webpack_require__(/*! ./map */ \"./fixtures/map.js\");\n\nmodule.exports = map;\n\n\n//# sourceURL=webpack:///./fixtures/spec_1.js?");
+eval("\nconst reduce = __webpack_require__(/*! ./reduce */ \"./__tests__/fixtures/multi/source/reduce.js\");\n\nmodule.exports = reduce;\n\n\n//# sourceURL=webpack:///./__tests__/fixtures/multi/source/spec_2.js?");
 
 /***/ })
 

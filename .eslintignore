@@ -1,1 +1,3 @@
-fixtures/**/*
+**/result.js
+**/result_*.js
+**/result/*.js
