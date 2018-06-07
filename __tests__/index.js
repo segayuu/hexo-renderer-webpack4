@@ -56,10 +56,22 @@ test('webpack mode: production', async () => {
   const fixtureName = 'production';
   const fixturePath = join(fixture_folder, fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
+  const source = join(fixturePath, 'source', 'spec_1.js');
 
   const hexo = await sandbox(fixtureName);
-  const result = await hexo.render.render({ path: join(fixturePath, 'source', 'spec_1.js'), engine: 'js' });
-  expect(result).toBe(await expectedPromise);
+
+  await expect(jsRender(source, hexo)).resolves.toBe(await expectedPromise);
+});
+
+test('not exist entry', async () => {
+  const fixtureName = 'development';
+  const fixturePath = join(fixture_folder, fixtureName);
+  const source = join(fixturePath, 'source', 'typo.js');
+
+  const hexo = await sandbox(fixtureName);
+
+  expect.assertions(1);
+  await expect(jsRender(source, hexo)).rejects.toThrow('ENOENT');
 });
 
 test('webpack multi entry', async () => {
