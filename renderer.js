@@ -1,59 +1,124 @@
 'use strict';
 const webpack = require('webpack');
-const os = require('os');
 const MemoryFS = require('memory-fs');
-const pathFn = require('path');
+
+const { tmpdir } = require('os');
+const { join, basename } = require('path');
+
 const { tiferr } = require('iferr');
 
-const lodashMap = require('lodash/map');
-
-const TMP_PATH = os.tmpdir();
-
+const TMP_PATH = tmpdir();
 const mfs = new MemoryFS();
 
-const getConfig = (path, ctx) => {
-  const { webpack: themeConfig = {} } = ctx.thene ? ctx.theme.config : {};
-  const { webpack: siteConfig = {} } = ctx.config;
-
-  const config = Object.assign({}, themeConfig, siteConfig);
-
-  config.output = config.output || {};
-
-  Object.assign(config.output, {
-    path: TMP_PATH,
-    filename: pathFn.basename(path)
-  });
-
-  if (typeof config.entry === 'string') {
-    config.entry = pathFn.join(ctx.source_dir, config.entry);
-  } else {
-    // Convert config of the entry from object.
-    config.entry = lodashMap(config.entry, x => pathFn.join(ctx.source_dir, x));
+/**
+ * @param {string} target
+ * @param {string|string[]} entrys
+ */
+const isEntry = (target, entrys) => {
+  if (typeof entrys === 'string') {
+    return entrys === target;
   }
-
-  return config;
+  return entrys.includes(target);
 };
 
-function renderer({path, text}, options) {
-  const config = getConfig(path, this);
+/**
+ * @template T
+ * @template R
+ * @template U
+ * @param {Iterable<T>|ArrayLike<T>|Object.<string, T>} obj
+ * @param {(this: U, value: T) => R} callback
+ * @param {U} thisArg
+ * @return {R[]}
+ */
+const objectMap = (obj, callback, thisArg = undefined) => {
+  if (obj == null) {
+    throw new TypeError();
+  }
 
-  // If this file is not a webpack entry simply return the file.
-  if (typeof config.entry === 'string') {
-    if (config.entry !== path) {
-      return text;
-    }
-  } else if (!config.entry.includes(path)) {
-    return text;
+  if (Array.isArray(obj)) {
+    return obj.map(callback, thisArg);
+  }
+
+  const type = typeof obj;
+
+  if (type !== 'object' && type !== 'string') {
+    throw new TypeError();
+  }
+
+  // maybe iterable
+  if (typeof obj[Symbol.iterator] === 'function') {
+    return Array.from(obj, callback, thisArg);
+  }
+
+  // maybe ArrayLike(or string)
+  if (typeof obj.length === 'number') {
+    return Array.from(obj, callback, thisArg);
+  }
+
+  return Object.values(obj).map(callback, thisArg);
+};
+
+/**
+ * @param {string|Iterable<string>|ArrayLike<string>|Object.<string, string>} targets
+ * @param {string} base
+ * @return {string|string[]}
+ */
+const toAbsolutePath = (targets, base) => {
+  if (targets == null) {
+    return [];
+  }
+  if (typeof targets === 'string') {
+    return join(base, targets);
+  }
+
+  // Convert config of the entry from object.
+  return objectMap(targets, x => join(base, x));
+};
+
+
+/**
+ * @typedef {object} Hexo
+ */
+/**
+ * @param {Hexo} ctx
+ */
+const getRawWebpackConfig = ctx => {
+  const { webpack: themeConfig } = ctx.thene ? ctx.theme.config : {};
+  const { webpack: siteConfig } = ctx.config;
+  return Object.assign({}, themeConfig, siteConfig);
+};
+
+/**
+ * @param {string} path
+ * @param {Hexo} ctx
+ */
+const getWebpackConfig = (path, ctx) => {
+  const config = Object.assign({ output: {} }, getRawWebpackConfig(ctx));
+
+  if (!config.entry || !isEntry(path, toAbsolutePath(config.entry, ctx.source_dir))) {
+    return null;
   }
 
   config.entry = path;
 
-  // Setup compiler to use in-memory file system then run it.
+  Object.assign(config.output, {
+    path: TMP_PATH,
+    filename: basename(path)
+  });
+
+  return config;
+};
+
+/**
+ * @param {webpack.Configuration} config
+ * @param {Hexo} ctx
+ */
+const webpackInmemoryRenderAsync = (config, ctx) => {
   const compiler = webpack(config);
   compiler.outputFileSystem = mfs;
 
   const { output } = compiler.options;
-  const outputPath = pathFn.join(output.path, output.filename);
+  const outputPath = join(output.path, output.filename);
 
   let resolve, reject;
 
@@ -61,18 +126,28 @@ function renderer({path, text}, options) {
 
   compiler.run(tiferr(reject, stats => {
     if (stats.hasErrors()) {
-      this.log.error(stats.toString());
+      ctx.log.error(stats.toString());
       throw new Error(stats.toJson('errors-only').errors.join('\n'));
     }
 
     if (stats.hasWarnings()) {
-      this.log.error(stats.toString());
+      ctx.log.warn(stats.toString());
     }
 
     resolve(mfs.readFileSync(outputPath, 'utf8'));
   }));
 
   return promise;
+};
+
+function renderer({path, text}) {
+  const config = getWebpackConfig(path, this);
+
+  if (config == null) {
+    return text;
+  }
+
+  return webpackInmemoryRenderAsync(config, this);
 }
 
 module.exports = renderer;
