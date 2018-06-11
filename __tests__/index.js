@@ -2,26 +2,22 @@
 const Hexo = require('hexo');
 const { readFile } = require('fs');
 const { promisify } = require('util');
-const readFileAsync = promisify(readFile);
 const { join } = require('path');
 const { createSandbox, process } = require('hexo-test-utils/core');
 const { contentFor } = require('hexo-test-utils/routing');
 
+
+const readFileAsync = promisify(readFile);
 const fixture_folder = join(__dirname, 'fixtures');
 
-const getSandBox = () => {
-  return createSandbox(Hexo, {
-    fixture_folder,
-    plugins: [
-      require.resolve('../index.js')
-    ]
-  });
-};
+/** @type {(options?: string|{ fixtureName?: string; skipInit?: boolean; }) => Hexo} */
+const sandbox = createSandbox(Hexo, { fixture_folder, plugins: [require.resolve('../index.js')] });
+
+const getFixturePath = name => join(fixture_folder, name);
 
 /** @type {(path: string; ctx: Hexo) => Promise<string>} */
 const jsRender = (path, ctx) => ctx.render.render({ path, engine: 'js' });
 
-const sandbox = getSandBox();
 
 test('hexo.render - state', async () => {
   const hexo = await sandbox('development');
@@ -31,11 +27,10 @@ test('hexo.render - state', async () => {
 
 test('hexo.route - result', async () => {
   const fixtureName = 'development';
-  const fixturePath = join(fixture_folder, fixtureName);
+  const fixturePath = getFixturePath(fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
 
-  const ctx = await sandbox(fixtureName);
-  await process(ctx);
+  const ctx = await process(await sandbox(fixtureName));
 
   const content = await contentFor(ctx, 'spec_1.js');
   expect(content.toString('utf8')).toBe(await expectedPromise);
@@ -43,7 +38,7 @@ test('hexo.route - result', async () => {
 
 test('webpack mode: development', async () => {
   const fixtureName = 'development';
-  const fixturePath = join(fixture_folder, fixtureName);
+  const fixturePath = getFixturePath(fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
   const source = join(fixturePath, 'source', 'spec_1.js');
 
@@ -54,7 +49,7 @@ test('webpack mode: development', async () => {
 
 test('webpack mode: production', async () => {
   const fixtureName = 'production';
-  const fixturePath = join(fixture_folder, fixtureName);
+  const fixturePath = getFixturePath(fixtureName);
   const expectedPromise = readFileAsync(join(fixturePath, 'result.js'), 'utf8');
   const source = join(fixturePath, 'source', 'spec_1.js');
 
@@ -65,7 +60,7 @@ test('webpack mode: production', async () => {
 
 test('not exist entry', async () => {
   const fixtureName = 'development';
-  const fixturePath = join(fixture_folder, fixtureName);
+  const fixturePath = getFixturePath(fixtureName);
   const source = join(fixturePath, 'source', 'typo.js');
 
   const hexo = await sandbox(fixtureName);
@@ -76,7 +71,7 @@ test('not exist entry', async () => {
 
 test('webpack multi entry', async () => {
   const fixtureName = 'multi';
-  const fixturePath = join(fixture_folder, fixtureName);
+  const fixturePath = getFixturePath(fixtureName);
 
   const expectedsPromise = Promise.all([
     join(fixturePath, 'result_1.js'),
@@ -85,7 +80,6 @@ test('webpack multi entry', async () => {
 
   const hexo = await sandbox(fixtureName);
 
-  /** @type { Promise<string[]> } */
   const resultsPromise = Promise.all([
     join(fixturePath, 'source', 'spec_1.js'),
     join(fixturePath, 'source', 'spec_2.js')
