@@ -28,7 +28,7 @@
     "test": "jest"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=10 || 8"
   },
   "jest": {
     "testRegex": "/__tests__/[^/\\\\]+\\.js$"
