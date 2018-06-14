@@ -2096,8 +2096,8 @@ hexo-log@^0.2.0:
     hexo-bunyan "^1.0.0"
 
 hexo-test-utils@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/hexo-test-utils/-/hexo-test-utils-0.3.0.tgz#0f22d7093b8992482441865541bf34581c8cdd99"
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/hexo-test-utils/-/hexo-test-utils-0.3.1.tgz#84413aa98063c8e6c46e09953c1596164074025b"
   dependencies:
     bluebird "^3.5.1"
     stream-to-promise "^2.2.0"
