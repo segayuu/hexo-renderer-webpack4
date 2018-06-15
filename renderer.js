@@ -5,7 +5,7 @@ const MemoryFS = require('memory-fs');
 const { tmpdir } = require('os');
 const { join, basename, relative } = require('path');
 
-const { iferr, tiferr } = require('iferr');
+const { tiferr } = require('iferr');
 
 const TMP_PATH = tmpdir();
 const mfs = new MemoryFS();
@@ -152,7 +152,7 @@ const webpackMultiRenderAsync = (configs, ctx) => {
     return Promise.reject(new Error());
   }
 
-  let promises = configs.map(config => {
+  return Promise.all(configs.map(config => {
     const { output } = config;
     const { path, filename } = output;
 
@@ -163,9 +163,11 @@ const webpackMultiRenderAsync = (configs, ctx) => {
     const compiler = webpack(config);
     compiler.outputFileSystem = mfs;
 
-    return new Promise((resolve, reject) => {
-      compiler.run(iferr(reject, stats => { resolve(stats); }));
-    }).then(stats => {
+    let resolve, reject;
+
+    const promise = new Promise((_resolve, _reject) => { resolve = _resolve; reject = _reject; });
+
+    compiler.run(tiferr(reject, stats => {
       if (stats.hasErrors()) {
         ctx.log.error(stats.toString());
         throw new Error(stats.toJson('errors-only').errors.join('\n'));
@@ -177,10 +179,11 @@ const webpackMultiRenderAsync = (configs, ctx) => {
 
       const result = mfs.readFileSync(outputPath, 'utf8');
       ctx.route.set(routePath, result);
-    });
-  });
+      resolve();
+    }));
 
-  return Promise.all(promises);
+    return promise;
+  }));
 };
 
 function renderer({path, text}) {
