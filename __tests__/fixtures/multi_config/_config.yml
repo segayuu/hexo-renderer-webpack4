@@ -1,0 +1,10 @@
+theme: test
+webpack:
+  - mode: development
+    entry: spec_1.js
+    output:
+      filename: result_1.js
+  - mode: production
+    entry: spec_1.js
+    output:
+      filename: result_2.js

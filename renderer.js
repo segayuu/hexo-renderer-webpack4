@@ -3,9 +3,9 @@ const webpack = require('webpack');
 const MemoryFS = require('memory-fs');
 
 const { tmpdir } = require('os');
-const { join, basename } = require('path');
+const { join, basename, relative } = require('path');
 
-const { tiferr } = require('iferr');
+const { iferr, tiferr } = require('iferr');
 
 const TMP_PATH = tmpdir();
 const mfs = new MemoryFS();
@@ -45,12 +45,12 @@ const objectMap = (obj, callback, thisArg = undefined) => {
     throw new TypeError();
   }
 
-  // maybe iterable
+  // maybe iterable(or string)
   if (typeof obj[Symbol.iterator] === 'function') {
     return Array.from(obj, callback, thisArg);
   }
 
-  // maybe ArrayLike(or string)
+  // maybe ArrayLike
   if (typeof obj.length === 'number') {
     return Array.from(obj, callback, thisArg);
   }
@@ -75,7 +75,6 @@ const toAbsolutePath = (targets, base) => {
   return objectMap(targets, x => join(base, x));
 };
 
-
 /**
  * @typedef {object} Hexo
  */
@@ -83,9 +82,15 @@ const toAbsolutePath = (targets, base) => {
  * @param {Hexo} ctx
  */
 const getRawWebpackConfig = ctx => {
-  const { webpack: themeConfig } = ctx.thene ? ctx.theme.config : {};
-  const { webpack: siteConfig } = ctx.config;
-  return Object.assign({}, themeConfig, siteConfig);
+  return Object.assign({}, ctx.config, ctx.theme.config, ctx.config.theme_config).webpack;
+};
+
+const resolveEntryPath = (path, config, ctx) => {
+  if (!config.entry || !isEntry(path, toAbsolutePath(config.entry, ctx.source_dir))) {
+    return null;
+  }
+
+  return Object.assign({}, config, { entry: path });
 };
 
 /**
@@ -93,20 +98,11 @@ const getRawWebpackConfig = ctx => {
  * @param {Hexo} ctx
  */
 const getWebpackConfig = (path, ctx) => {
-  const config = Object.assign({ output: {} }, getRawWebpackConfig(ctx));
-
-  if (!config.entry || !isEntry(path, toAbsolutePath(config.entry, ctx.source_dir))) {
-    return null;
+  const raw = getRawWebpackConfig(ctx);
+  if (Array.isArray(raw)) {
+    return raw.map(item => resolveEntryPath(path, item, ctx)).filter(item => item != null);
   }
-
-  config.entry = path;
-
-  Object.assign(config.output, {
-    path: TMP_PATH,
-    filename: basename(path)
-  });
-
-  return config;
+  return resolveEntryPath(path, raw, ctx);
 };
 
 /**
@@ -114,11 +110,18 @@ const getWebpackConfig = (path, ctx) => {
  * @param {Hexo} ctx
  */
 const webpackInmemoryRenderAsync = (config, ctx) => {
+  const output = {
+    path: TMP_PATH,
+    filename: basename(config.entry)
+  };
+  const outputPath = join(output.path, output.filename);
+
+  config.output = config.output || {};
+
+  Object.assign(config.output, output);
+
   const compiler = webpack(config);
   compiler.outputFileSystem = mfs;
-
-  const { output } = compiler.options;
-  const outputPath = join(output.path, output.filename);
 
   let resolve, reject;
 
@@ -140,11 +143,57 @@ const webpackInmemoryRenderAsync = (config, ctx) => {
   return promise;
 };
 
+/**
+ * @param {webpack.Configuration[]} configs
+ * @param {Hexo} ctx
+ */
+const webpackMultiRenderAsync = (configs, ctx) => {
+  if (!configs.every(config => config.output)) {
+    return Promise.reject(new Error());
+  }
+
+  let promises = configs.map(config => {
+    const { output } = config;
+    const { path, filename } = output;
+
+    output.path = path ? join(TMP_PATH, path) : TMP_PATH;
+    const outputPath = join(output.path, output.filename);
+    const routePath = filename || relative(ctx.source_dir, config.entry);
+
+    const compiler = webpack(config);
+    compiler.outputFileSystem = mfs;
+
+    return new Promise((resolve, reject) => {
+      compiler.run(iferr(reject, stats => { resolve(stats); }));
+    }).then(stats => {
+      if (stats.hasErrors()) {
+        ctx.log.error(stats.toString());
+        throw new Error(stats.toJson('errors-only').errors.join('\n'));
+      }
+
+      if (stats.hasWarnings()) {
+        ctx.log.warn(stats.toString());
+      }
+
+      const result = mfs.readFileSync(outputPath, 'utf8');
+      ctx.route.set(routePath, result);
+    });
+  });
+
+  return Promise.all(promises);
+};
+
 function renderer({path, text}) {
   const config = getWebpackConfig(path, this);
 
   if (config == null) {
     return text;
+  }
+  if (Array.isArray(config)) {
+    if (config.length === 0) {
+      return text;
+    }
+    return webpackMultiRenderAsync(config, this).then(_ => '');
   }
 
   return webpackInmemoryRenderAsync(config, this);
