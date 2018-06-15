@@ -17,7 +17,7 @@
     "eslint-config-hexo": "^3.0.0",
     "eslint-plugin-jest": "^21.15.1",
     "hexo": "^3.7.1",
-    "hexo-test-utils": "^0.3.0",
+    "hexo-test-utils": "^0.3.1",
     "jest": "^22.4.3"
   },
   "peerDependencies": {
@@ -28,7 +28,7 @@
     "test": "jest"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=10 || 8"
   },
   "jest": {
     "testRegex": "/__tests__/[^/\\\\]+\\.js$"
