@@ -7,3 +7,16 @@ cache:
   yarn: true
   directories:
     - "node_modules"
+deploy:
+  provider: releases
+  api_key:
+    secure: OOoIRVpeNqNRsOOVJ3UOA
+  file:
+    - index.js
+    - renderer.js
+    - LICENSE
+    - README.md
+    - package.json
+  skip_cleanup: true
+  on:
+    tags: true
