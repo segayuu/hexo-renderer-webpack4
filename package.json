@@ -1,6 +1,6 @@
 {
   "name": "hexo-renderer-webpack4",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "hexo render webpack4",
   "main": "index.js",
   "repository": "https://github.com/segayuu/hexo-renderer-webpack4",
